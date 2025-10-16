@@ -2,12 +2,14 @@ import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/contexts/auth-context'
+import { DataProvider } from '@/contexts/data-context'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'SGI Basílica',
+  description: 'Sistema de Gestión Interno - Basílica Menor Nuestra Señora de la Merced'
 }
 
 export default function RootLayout({
@@ -16,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
         <style>{`
 html {
@@ -27,7 +29,12 @@ html {
         `}</style>
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          <DataProvider>
+            {children}
+            <Toaster />
+          </DataProvider>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

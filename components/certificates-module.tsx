@@ -5,22 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Download, Eye, Hash, Calendar, FileText, Users } from "lucide-react"
+import { Search, Download, Eye, Hash, Calendar, FileText, Users } from "lucide-react"
+import { CertificateFormDialog } from "./certificate-form-dialog"
+import { useToast } from "@/hooks/use-toast"
 
 export function CertificatesModule() {
+  const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [certificates, setCertificates] = useState([
     {
@@ -100,17 +91,6 @@ export function CertificatesModule() {
     },
   ])
 
-  const [newCertificate, setNewCertificate] = useState({
-    type: "",
-    personName: "",
-    parentNames: "",
-    date: "",
-    priest: "",
-    bookNumber: "",
-    pageNumber: "",
-    notes: "",
-  })
-
   const filteredCertificates = certificates.filter(
     (cert) =>
       cert.personName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -143,25 +123,31 @@ export function CertificatesModule() {
     return "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")
   }
 
-  const handleCreateCertificate = () => {
+  const handleCreateCertificate = (certificateData: {
+    type: string
+    personName: string
+    parentNames: string
+    date: string
+    priest: string
+    bookNumber: string
+    pageNumber: string
+    notes: string
+  }) => {
     const certificate = {
       id: `CERT-2024-${String(certificates.length + 1).padStart(3, "0")}`,
-      ...newCertificate,
+      ...certificateData,
       issueDate: new Date().toISOString().split("T")[0],
-      status: "Pendiente",
+      status: "Pendiente" as const,
       hash: generateHash(),
       parish: "Basílica Menor Nuestra Señora de la Merced",
     }
+
     setCertificates([certificate, ...certificates])
-    setNewCertificate({
-      type: "",
-      personName: "",
-      parentNames: "",
-      date: "",
-      priest: "",
-      bookNumber: "",
-      pageNumber: "",
-      notes: "",
+
+    // Mostrar notificación de éxito
+    toast({
+      title: "Certificado creado exitosamente",
+      description: `Certificado de ${certificateData.type} para ${certificateData.personName} ha sido registrado.`,
     })
   }
 
@@ -180,118 +166,7 @@ export function CertificatesModule() {
           <p className="text-gray-600">Administración de certificados eclesiásticos</p>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nuevo Certificado
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Crear Nuevo Certificado</DialogTitle>
-              <DialogDescription>Registre un nuevo certificado eclesiástico en el sistema.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="type">Tipo de Sacramento</Label>
-                  <Select onValueChange={(value) => setNewCertificate({ ...newCertificate, type: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Bautismo">Bautismo</SelectItem>
-                      <SelectItem value="Primera Comunión">Primera Comunión</SelectItem>
-                      <SelectItem value="Confirmación">Confirmación</SelectItem>
-                      <SelectItem value="Matrimonio">Matrimonio</SelectItem>
-                      <SelectItem value="Defunción">Defunción</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date">Fecha del Sacramento</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={newCertificate.date}
-                    onChange={(e) => setNewCertificate({ ...newCertificate, date: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="personName">Nombre de la Persona</Label>
-                <Input
-                  id="personName"
-                  value={newCertificate.personName}
-                  onChange={(e) => setNewCertificate({ ...newCertificate, personName: e.target.value })}
-                  placeholder="Nombre completo"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="parentNames">Padres/Testigos</Label>
-                <Input
-                  id="parentNames"
-                  value={newCertificate.parentNames}
-                  onChange={(e) => setNewCertificate({ ...newCertificate, parentNames: e.target.value })}
-                  placeholder="Nombres de padres o testigos"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="priest">Sacerdote Oficiante</Label>
-                  <Select onValueChange={(value) => setNewCertificate({ ...newCertificate, priest: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar sacerdote" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Padre Miguel Rodríguez">Padre Miguel Rodríguez</SelectItem>
-                      <SelectItem value="Padre Antonio Silva">Padre Antonio Silva</SelectItem>
-                      <SelectItem value="Diácono José Martínez">Diácono José Martínez</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bookNumber">Libro</Label>
-                  <Input
-                    id="bookNumber"
-                    value={newCertificate.bookNumber}
-                    onChange={(e) => setNewCertificate({ ...newCertificate, bookNumber: e.target.value })}
-                    placeholder="Ej: Libro 45"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pageNumber">Página</Label>
-                  <Input
-                    id="pageNumber"
-                    value={newCertificate.pageNumber}
-                    onChange={(e) => setNewCertificate({ ...newCertificate, pageNumber: e.target.value })}
-                    placeholder="Ej: Página 127"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Observaciones</Label>
-                <Textarea
-                  id="notes"
-                  value={newCertificate.notes}
-                  onChange={(e) => setNewCertificate({ ...newCertificate, notes: e.target.value })}
-                  placeholder="Observaciones adicionales..."
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCreateCertificate}>Crear Certificado</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CertificateFormDialog onCertificateCreate={handleCreateCertificate} />
       </div>
 
       {/* Estadísticas */}

@@ -1,0 +1,87 @@
+# Convención de Documentación
+
+## 📝 Regla Importante
+
+**TODOS los archivos de documentación (`.md`) deben colocarse en la carpeta `docs/`**
+
+## 📁 Estructura de Documentación
+
+```
+docs/
+├── README.md                      # Índice principal de la documentación
+├── INICIO_RAPIDO.md              # Guía de inicio rápido
+├── AUTENTICACION.md              # Documentación de autenticación
+├── README-USER-FORM.md           # Documentación del formulario de usuarios
+├── README-CERTIFICATE-FORM.md    # Documentación del formulario de certificados
+└── [futuros archivos .md]        # Toda nueva documentación aquí
+```
+
+## 📋 Nomenclatura
+
+### Guías Generales
+- Formato: `NOMBRE-EN-MAYUSCULAS.md`
+- Ejemplos:
+  - `INICIO_RAPIDO.md`
+  - `AUTENTICACION.md`
+  - `API.md`
+  - `DEPLOYMENT.md`
+
+### Componentes
+- Formato: `README-NOMBRE-COMPONENTE.md`
+- Ejemplos:
+  - `README-USER-FORM.md`
+  - `README-CERTIFICATE-FORM.md`
+  - `README-DASHBOARD.md`
+
+### Módulos Específicos
+- Formato: `NOMBRE-MODULO.md`
+- Ejemplos:
+  - `BLOCKCHAIN.md`
+  - `SEGURIDAD.md`
+  - `BASE-DATOS.md`
+
+## ✅ Buenas Prácticas
+
+1. **Siempre crear documentación en `docs/`**
+2. **Actualizar `docs/README.md`** cuando agregues nuevo archivo
+3. **Usar markdown estándar** para compatibilidad
+4. **Incluir ejemplos** siempre que sea posible
+5. **Mantener formato consistente** con archivos existentes
+
+## 🚫 Evitar
+
+- ❌ NO crear archivos .md en la raíz del proyecto
+- ❌ NO crear archivos .md en carpetas de componentes
+- ❌ NO usar nombres genéricos como "doc.md" o "notes.md"
+- ❌ NO duplicar documentación en múltiples lugares
+
+## 📝 Plantilla Básica para Nuevos Documentos
+
+```markdown
+# Título del Documento
+
+## 📋 Descripción
+
+[Descripción breve del contenido]
+
+## 🎯 Contenido
+
+[Secciones principales]
+
+## 💡 Ejemplos
+
+[Ejemplos de uso]
+
+## 📞 Referencias
+
+[Enlaces a otros documentos relacionados]
+
+---
+
+**Desarrollado con ❤️ por NEXORA**
+```
+
+---
+
+**Última actualización:** Octubre 2024
+
