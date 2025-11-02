@@ -48,6 +48,22 @@ export function BlockchainModule() {
   }
 
   const handleVerifyHash = () => {
+    // SIMULACIÓN DE ERROR: Hash específico que simula servicio blockchain no disponible
+    if (hashToVerify.trim() === "0xe5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6") {
+      setVerificationResult({
+        found: false,
+        serviceUnavailable: true,
+        message: "Servicio de blockchain no disponible",
+      })
+
+      toast({
+        title: "Servicio no disponible",
+        description: "No se pudo conectar con el servicio de blockchain. Por favor, intente nuevamente.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const sacramento = sacramentos.find((s) => s.hashblockchain === hashToVerify.trim())
 
     if (sacramento) {
@@ -352,20 +368,45 @@ export function BlockchainModule() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-red-600">
+                        <div className={`flex items-center gap-2 ${verificationResult.serviceUnavailable ? 'text-orange-600' : 'text-red-600'}`}>
                           <AlertCircle className="h-6 w-6" />
                           <span className="font-bold text-lg">{verificationResult.message}</span>
                         </div>
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                          <p className="text-sm text-red-800">
-                            El hash ingresado no se encuentra registrado en la blockchain. Verifique que:
-                          </p>
-                          <ul className="list-disc list-inside text-sm text-red-700 mt-2 space-y-1">
-                            <li>El hash esté completo y sin espacios</li>
-                            <li>El hash pertenezca a un sacramento de esta parroquia</li>
-                            <li>El sacramento haya sido registrado en el sistema</li>
-                          </ul>
-                        </div>
+                        {verificationResult.serviceUnavailable ? (
+                          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                            <p className="text-sm text-orange-800 font-semibold mb-2">
+                              No se pudo establecer conexión con el servicio de blockchain.
+                            </p>
+                            <p className="text-sm text-orange-700">
+                              El servicio puede estar temporalmente no disponible. Por favor:
+                            </p>
+                            <ul className="list-disc list-inside text-sm text-orange-700 mt-2 space-y-1">
+                              <li>Verifique su conexión a internet</li>
+                              <li>Intente nuevamente en unos momentos</li>
+                              <li>Si el problema persiste, contacte al administrador del sistema</li>
+                            </ul>
+                            <div className="mt-4">
+                              <Button 
+                                variant="outline" 
+                                onClick={handleVerifyHash}
+                                className="w-full border-orange-300 text-orange-700 hover:bg-orange-100"
+                              >
+                                Reintentar Verificación
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <p className="text-sm text-red-800">
+                              El hash ingresado no se encuentra registrado en la blockchain. Verifique que:
+                            </p>
+                            <ul className="list-disc list-inside text-sm text-red-700 mt-2 space-y-1">
+                              <li>El hash esté completo y sin espacios</li>
+                              <li>El hash pertenezca a un sacramento de esta parroquia</li>
+                              <li>El sacramento haya sido registrado en el sistema</li>
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

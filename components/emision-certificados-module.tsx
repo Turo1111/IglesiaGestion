@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useData } from "@/contexts/data-context"
+import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -23,13 +24,19 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Search, FileText, Download, Check, X, Calendar, Hash } from "lucide-react"
+import jsPDF from "jspdf"
 
 export function EmisionCertificadosModule() {
     const { fieles, sacramentos, getSacramentosByFiel, addCertificado } = useData()
+    const { user } = useAuth()
     const { toast } = useToast()
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedFiel, setSelectedFiel] = useState<number | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
+
+    // Verificar permisos del usuario
+    const canEmitCertificate = user?.role === "Administrador" || user?.role === "Secretario"
+    const canDownloadCertificate = user?.role === "Administrador" || user?.role === "Secretario"
 
     const filteredFieles = fieles.filter(
         (fiel) =>
@@ -43,10 +50,20 @@ export function EmisionCertificadosModule() {
     }
 
     const handleEmitCertificate = (idSacramento: number, tipo: string, nombreFiel: string) => {
+        // Verificar permisos
+        if (!canEmitCertificate) {
+            toast({
+                title: "Acceso denegado",
+                description: "No tiene permisos para emitir certificados.",
+                variant: "destructive",
+            })
+            return
+        }
+
         addCertificado({
             idSacramento,
-            tipoUsuario: "Administrativo",
-            idUsuario: 1, // Usuario actual del sistema
+            tipoUsuario: user?.role || "Administrativo",
+            idUsuario: parseInt(user?.id || "1"),
             fechaEmision: new Date().toISOString().split("T")[0],
         })
 
@@ -60,13 +77,160 @@ export function EmisionCertificadosModule() {
     }
 
     const handleDownloadCertificate = (sacramento: any, nombreFiel: string) => {
-        toast({
-            title: "Descargando certificado",
-            description: `El certificado de ${sacramento.tipo} para ${nombreFiel} se está descargando...`,
-        })
+        // Verificar permisos
+        if (!canDownloadCertificate) {
+            toast({
+                title: "Acceso denegado",
+                description: "No tiene permisos para descargar certificados.",
+                variant: "destructive",
+            })
+            return
+        }
 
-        // Aquí iría la lógica real de descarga
-        console.log("Descargando certificado:", sacramento)
+        try {
+            // SIMULACIÓN DE ERROR: Matrimonio de Carlos Mendoza García siempre falla
+            if (sacramento.tipo === "Matrimonio" && nombreFiel === "Carlos Mendoza García") {
+                throw new Error("ERROR_SIMULADO: Fallo en la generación del PDF para certificado de Matrimonio - ID: QR-MAT-2024-007")
+            }
+
+            // Crear documento PDF
+            const doc = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
+            })
+
+            const pageWidth = doc.internal.pageSize.getWidth()
+            const pageHeight = doc.internal.pageSize.getHeight()
+
+            // Fondo decorativo con bordes
+            doc.setDrawColor(139, 69, 19) // Color café/marrón para apariencia eclesiástica
+            doc.setLineWidth(2)
+            doc.rect(10, 10, pageWidth - 20, pageHeight - 20, "S")
+
+            doc.setLineWidth(0.5)
+            doc.rect(15, 15, pageWidth - 30, pageHeight - 30, "S")
+
+            // Decoración superior (cruz)
+            doc.setFontSize(40)
+            doc.text("✝", pageWidth / 2, 30, { align: "center" })
+
+            // Título principal
+            doc.setFontSize(24)
+            doc.setFont("times", "bold")
+            doc.text("CERTIFICADO ECLESIÁSTICO", pageWidth / 2, 45, { align: "center" })
+
+            // Subtítulo del tipo de sacramento
+            doc.setFontSize(18)
+            doc.setFont("times", "normal")
+            doc.text(`DE ${sacramento.tipo.toUpperCase()}`, pageWidth / 2, 55, { align: "center" })
+
+            // Línea decorativa
+            doc.setLineWidth(0.5)
+            doc.line(40, 60, pageWidth - 40, 60)
+
+            // Texto introductorio
+            doc.setFontSize(12)
+            doc.setFont("times", "italic")
+            const textoIntro = "La presente certifica que en los registros parroquiales consta que:"
+            doc.text(textoIntro, pageWidth / 2, 75, { align: "center" })
+
+            // Nombre del fiel (destacado)
+            doc.setFontSize(16)
+            doc.setFont("times", "bold")
+            doc.text(nombreFiel, pageWidth / 2, 90, { align: "center" })
+
+            // Texto principal del certificado
+            doc.setFontSize(12)
+            doc.setFont("times", "normal")
+
+            const textoCuerpo = `Ha recibido el Sacramento de ${sacramento.tipo}`
+            doc.text(textoCuerpo, pageWidth / 2, 105, { align: "center" })
+
+            // Detalles del sacramento
+            doc.setFontSize(11)
+            const detalles = [
+                `Fecha de Celebración: ${sacramento.fechaCelebracion}`,
+                `Fecha de Emisión: ${sacramento.fechaEmision || new Date().toLocaleDateString("es-ES")}`,
+            ]
+
+            let yPosition = 125
+            detalles.forEach((detalle) => {
+                doc.text(detalle, pageWidth / 2, yPosition, { align: "center" })
+                yPosition += 10
+            })
+
+            // Información de verificación
+            doc.setFontSize(9)
+            doc.setFont("times", "italic")
+            yPosition = 155
+
+            doc.text("Código de Verificación:", 25, yPosition)
+            doc.setFont("courier", "normal")
+            doc.text(sacramento.codigoQR, 25, yPosition + 6)
+
+            doc.setFont("times", "italic")
+            doc.text("Hash Blockchain:", 25, yPosition + 16)
+            doc.setFont("courier", "normal")
+
+            // Dividir el hash en múltiples líneas si es muy largo
+            const hash = sacramento.hashblockchain
+            const hashPart1 = hash.substring(0, 40)
+            const hashPart2 = hash.substring(40)
+            doc.text(hashPart1, 25, yPosition + 22)
+            if (hashPart2) {
+                doc.text(hashPart2, 25, yPosition + 27)
+            }
+
+            // Sección de firmas
+            yPosition = pageHeight - 70
+            doc.setLineWidth(0.3)
+
+            // Línea de firma izquierda
+            doc.line(30, yPosition, 80, yPosition)
+            doc.setFontSize(10)
+            doc.setFont("times", "normal")
+            doc.text("Párroco", 55, yPosition + 6, { align: "center" })
+
+            // Línea de firma derecha
+            doc.line(pageWidth - 80, yPosition, pageWidth - 30, yPosition)
+            doc.text("Secretario Parroquial", pageWidth - 55, yPosition + 6, { align: "center" })
+
+            // Sello parroquial (texto simulado)
+            doc.setFontSize(8)
+            doc.setFont("times", "italic")
+            const textoSello = [
+                "Este certificado es emitido por",
+                "la Parroquia [Nombre de la Parroquia]",
+                "y cuenta con validez oficial eclesiástica"
+            ]
+            yPosition = pageHeight - 45
+            textoSello.forEach((linea) => {
+                doc.text(linea, pageWidth / 2, yPosition, { align: "center" })
+                yPosition += 5
+            })
+
+            // Número de certificado
+            doc.setFontSize(8)
+            doc.setFont("courier", "normal")
+            doc.text(`Certificado N° ${sacramento.idSacramento.toString().padStart(6, "0")}`, pageWidth / 2, pageHeight - 20, { align: "center" })
+
+            // Descargar el PDF
+            const nombreArchivo = `Certificado_${sacramento.tipo.replace(/ /g, "_")}_${nombreFiel.replace(/ /g, "_")}.pdf`
+            doc.save(nombreArchivo)
+
+            toast({
+                title: "Certificado descargado exitosamente",
+                description: `El certificado de ${sacramento.tipo} para ${nombreFiel} ha sido descargado.`,
+            })
+        } catch (error) {
+            console.error("Error al generar certificado:", error)
+            toast({
+                title: "Error al descargar certificado",
+                description: "Ocurrió un error al generar el certificado. Por favor, intente nuevamente.",
+                variant: "destructive",
+            })
+        }
     }
 
     const fielSeleccionado = selectedFiel ? fieles.find((f) => f.idFiel === selectedFiel) : null
@@ -298,6 +462,8 @@ export function EmisionCertificadosModule() {
                                                                 fielSeleccionado?.nombreCompleto || ""
                                                             )
                                                         }
+                                                        disabled={!canEmitCertificate}
+                                                        title={!canEmitCertificate ? "No tiene permisos para emitir certificados" : ""}
                                                     >
                                                         <FileText className="mr-2 h-4 w-4" />
                                                         Emitir Certificado
@@ -307,6 +473,8 @@ export function EmisionCertificadosModule() {
                                                         className="flex-1"
                                                         variant="outline"
                                                         onClick={() => handleDownloadCertificate(sacramento, fielSeleccionado?.nombreCompleto || "")}
+                                                        disabled={!canDownloadCertificate}
+                                                        title={!canDownloadCertificate ? "No tiene permisos para descargar certificados" : ""}
                                                     >
                                                         <Download className="mr-2 h-4 w-4" />
                                                         Descargar Certificado

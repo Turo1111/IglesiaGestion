@@ -60,7 +60,7 @@ const generateBlockchainHash = (): string => {
 }
 
 export function SacramentoFormDialog() {
-    const { addSacramento, fieles } = useData()
+    const { addSacramento, fieles, sacramentos } = useData()
     const { toast } = useToast()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -76,6 +76,26 @@ export function SacramentoFormDialog() {
             setIsSubmitting(true)
 
             try {
+                // Verificar si ya existe un sacramento con la misma combinación (fiel, tipo)
+                const sacramentoDuplicado = sacramentos.find(
+                    (s) =>
+                        s.idFiel === values.idFiel &&
+                        s.tipo === values.tipo
+                )
+
+                if (sacramentoDuplicado) {
+                    const fielSeleccionado = fieles.find((f) => f.idFiel === values.idFiel)
+                    
+                    toast({
+                        title: "Sacramento duplicado",
+                        description: `${fielSeleccionado?.nombreCompleto} ya tiene registrado el sacramento de ${values.tipo}.`,
+                        variant: "destructive",
+                    })
+                    
+                    setIsSubmitting(false)
+                    return
+                }
+
                 // Simular delay de red y procesamiento blockchain
                 await new Promise((resolve) => setTimeout(resolve, 1200))
 

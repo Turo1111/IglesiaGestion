@@ -59,7 +59,7 @@ const userValidationSchema = Yup.object({
 })
 
 export function UserFormDialog() {
-    const { addUser, roles } = useData()
+    const { addUser, roles, users } = useData()
     const { toast } = useToast()
     const [open, setOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -77,6 +77,21 @@ export function UserFormDialog() {
             setIsSubmitting(true)
 
             try {
+                // Verificar si el email ya existe
+                const emailExistente = users.find(
+                    (u) => u.email.toLowerCase() === values.email.toLowerCase()
+                )
+
+                if (emailExistente) {
+                    toast({
+                        title: "Email duplicado",
+                        description: `El correo electrónico ${values.email} ya está registrado en el sistema.`,
+                        variant: "destructive",
+                    })
+                    setIsSubmitting(false)
+                    return
+                }
+
                 // Simular delay de red
                 await new Promise((resolve) => setTimeout(resolve, 800))
 
